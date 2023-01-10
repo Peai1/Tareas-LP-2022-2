@@ -1,0 +1,3 @@
+compilar: gcc -g main.c 
+valgrind: valgrind --leak-check=yes ./a.out
+make clean programa valgrind (make con valgrind)

@@ -1,0 +1,141 @@
+#lang scheme
+
+(current-namespace (make-base-namespace))
+
+;; cons agrega a la lista al inicio
+;; car retorna el primero de la lista (no lo elimina)
+;; cdr retorna la lista sin el primer elemento (no lo elimina)
+
+;; Pregunta 1
+
+(define (inverso lista n)
+  (let recursion ((lista lista) (n n) (i 0))
+    (if (= i n)
+        '()
+        (cond ((equal? (member i lista) false)
+               (cons i (recursion lista n (+ i 1))))
+              (else (recursion lista n (+ i 1)))))))
+
+
+;; Pregunta 2
+
+; Simple
+
+(define (umbral_simple lista umbral tipo)
+  (let recursion ((lista lista) (umbral umbral) (tipo tipo) (i 0))
+    (if (null? lista)
+        '()
+        (cond ((and (eqv? tipo '#\M)(> (car lista) umbral))
+               (cons i (recursion (cdr lista) umbral tipo (+ i 1))))
+              ((and (eqv? tipo '#\m)(< (car lista) umbral))
+               (cons i (recursion (cdr lista) umbral tipo (+ i 1))))
+              (else (recursion (cdr lista) umbral tipo (+ i 1)))
+              )
+        )
+    )
+  )
+
+; Cola
+
+(define (umbral_cola lista umbral tipo)
+  (let recursion ((lista lista) (umbral umbral) (tipo tipo) (aux '()) (i 0))
+    (if (null? lista)
+        (reverse aux)
+        (cond ((and (eqv? tipo '#\M)(> (car lista) umbral))
+               (recursion (cdr lista) umbral tipo (cons i aux) (+ i 1)))
+              ((and (eqv? tipo '#\m)(< (car lista) umbral))
+               (recursion (cdr lista) umbral tipo (cons i aux) (+ i 1)))
+              (else (recursion (cdr lista) umbral tipo aux (+ i 1)))
+              )
+        )
+    )
+  )
+                                                                                 
+; Pregunta 3
+
+; Simple
+
+(define (modsel_simple lista seleccion f)
+  (let recursion ((lista lista) (seleccion seleccion) (f f) (i 0))
+    (if (null? lista)
+        '()
+        (cond ((equal? (member i seleccion) false)
+               (cons (car lista) (recursion (cdr lista) seleccion f (+ i 1))))
+              (else (cons (f (car lista)) (recursion (cdr lista) seleccion f (+ i 1))))
+              )
+        )
+    )
+  )
+
+; Cola
+
+(define (modsel_cola lista seleccion f)
+  (let recursion ((lista lista) (seleccion seleccion) (f f) (aux '()) (i 0))
+    (if (null? lista)
+        (reverse aux)
+        (cond ((equal? (member i seleccion) false)
+               (recursion (cdr lista) seleccion f (cons (car lista) aux) (+ i 1)))
+              (else (recursion (cdr lista) seleccion f (cons (f (car lista)) aux) (+ i 1)))
+              )
+        )
+    )
+  )
+
+; Pregunta 4
+
+(define (estables lista umbral fM fm)
+  (let recursion ((listafM (modsel_simple lista (inverso '() (length lista)) fM)) (listafm (modsel_simple lista (inverso '() (length lista)) fm)) (umbral umbral) (mayor 0) (menor 0) (lista lista))
+    (if (null? lista)
+        (list mayor menor)
+        (cond ((and (< (car lista) umbral) (< (car listafm) umbral))
+               (recursion (cdr listafM) (cdr listafm) umbral mayor (+ menor 1) (cdr lista)))
+              ((and (> (car lista) umbral) (> (car listafM) umbral))
+               (recursion (cdr listafM) (cdr listafm) umbral (+ mayor 1) menor (cdr lista)))
+              (else (recursion (cdr listafM) (cdr listafm) umbral mayor menor (cdr lista)))
+              )
+        )
+    )
+  )
+
+; Pregunta 5
+
+(define (query lista pos op params)
+  (let recursion ((lista lista) (pos pos) (op op) (params params) (i 0))
+    (if (null? lista)
+        '()
+        (cond ((and (= i pos) (= op 1))
+               (umbral_simple (car lista) (car params) (car (cdr params)) ))
+              ((and (= i pos) (= op 2))
+               (modsel_simple (car lista) (car params) (eval (car (cdr params)))))
+              ((and (= i pos) (= op 3))
+               (estables (car lista) (car params) (eval (car (cdr params))) (eval (car (cdr (cdr params))))))
+              (else (recursion (cdr lista) pos op params (+ i 1))))
+        )
+    )
+  )
+
+
+(inverso '(1 3 7) 10)
+
+(umbral_simple '(15 2 1 3 27 5 10) 5 #\M)
+
+(umbral_cola '(15 2 1 3 27 5 10) 5 #\m)
+
+(modsel_simple '(15 2 1 3 27 5 10) '(0 4 6) (lambda (x) (modulo x 2)) )
+
+(modsel_cola '(15 2 1 3 27 5 10) '(3 1 2) (lambda (x) (+ x 5)) )
+
+(estables '(15 2 1 3 27 5 10) 5 (lambda (x) (/ x 2)) (lambda (x) (* x 2)) )
+
+(query '((0 1 2 3 4) (4 3 2 1 0) (15 2 1 3 27 5 10)) 1 1 '(1 #\M))
+
+(query '((0 1 2 3 4) (4 3 2 1 0) (15 2 1 3 27 5 10)) 0 2 '((0 4) (lambda (x) (+ x 100))))
+
+(query '((0 1 2 3 4) (4 3 2 1 0) (15 2 1 3 27 5 10)) 2 3 '(5 (lambda (x)(/ x 2)) (lambda (x) (* x 2))) )
+           
+  
+              
+        
+ 
+  
+  
